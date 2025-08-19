@@ -1,0 +1,60 @@
+//@version=6
+indicator("SPY Sell Exit Signal — Updated Model July 2025", overlay=true)
+
+// === INPUTS ===
+useVIX        = input.bool(false, "Enable VIX Filter?")
+vixSymbol     = input.symbol("CBOE:VIX", "VIX Symbol")
+vixThreshold  = input.float(45.0, "VIX Threshold")
+
+// === PRICE SERIES ===
+spyClose     = close
+spyLow20     = ta.lowest(close, 20)
+spyLow12w    = ta.lowest(close, 60)
+spyLow52w    = ta.lowest(close, 252)
+spyHigh100w  = ta.highest(close, 500)
+
+rebound20    = (spyClose - spyLow20) / spyLow20 * 100
+above12w     = (spyClose - spyLow12w) / spyLow12w * 100
+above52w     = (spyClose - spyLow52w) / spyLow52w * 100
+distHigh100  = (spyHigh100w - spyClose) / spyHigh100w * 100
+
+retDaily     = (spyClose - spyClose[1]) / spyClose[1] * 100
+bigGain3     = ta.highest(retDaily, 15) >= 3.0
+bigGain175   = ta.highest(retDaily, 10) >= 1.75
+
+// === RELAXED LOGIC ===
+barsSince52Low = ta.barssince(low == spyLow52w)
+drop175        = retDaily <= -1.75
+var bool relaxedOn = false
+if barsSince52Low > 80 and drop175
+    relaxedOn := not relaxedOn
+
+// Relaxed thresholds
+rebound20_rel   = rebound20 >= 2.7
+bigGain3_rel    = ta.highest(retDaily, 15) >= 1.20
+bigGain175_rel  = ta.highest(retDaily, 10) >= 0.85
+above12w_rel    = above12w >= 4.5
+withinHigh_rel  = distHigh100 <= 3.75
+
+// Strict thresholds
+rebound20_str   = rebound20 >= 6
+bigGain3_str    = bigGain3
+bigGain175_str  = bigGain175
+above12w_str    = above12w >= 8
+breakHigh_str   = spyClose > spyHigh100w[1]
+
+// Final logic
+sellStrict = rebound20_str and bigGain3_str and bigGain175_str and above12w_str and breakHigh_str
+sellRelax  = rebound20_rel and bigGain3_rel and bigGain175_rel and above12w_rel and withinHigh_rel
+sellSignal = (relaxedOn ? sellRelax : sellStrict)
+
+vixClose   = request.security(vixSymbol, timeframe.period, close)
+sellFinal  = sellSignal
+if useVIX
+    sellFinal := sellSignal and (vixClose < vixThreshold)
+
+// === PLOT SMALL RED TRIANGLE ===
+plotshape(sellFinal, title="Sell Signal", style=shape.triangleup, location=location.abovebar, color=color.red, size=size.small, text="SELL")
+
+// === ALERT ===
+alertcondition(sellFinal, title="SPY Sell Signal", message="SPY Sell Signal triggered by Updated Model July 2025")

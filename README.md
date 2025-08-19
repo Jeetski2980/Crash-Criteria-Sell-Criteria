@@ -2,6 +2,7 @@ SPY Buy & Sell Model — Full Explanation
 
 Purpose:
 This document explains a rule-based TradingView script that generates BUY and SELL signals for SPY (S&P 500 ETF) using technical indicators and market behavior. The model includes a crash-detection BUY signal and a post-rebound SELL signal.
+<img width="1914" height="900" alt="spy-signals png" src="https://github.com/user-attachments/assets/171af3cf-66c6-438b-96ae-5b6fafe5bbf1" />
 
 ✅ Buy Signal (Crash Detector)
 

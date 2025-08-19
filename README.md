@@ -1,143 +1,104 @@
-Crash Criteria — Updated Model July 2025
-Detecting Deep Market Crashes Using SPY:
- A Strict, Confirmed Signal Approach with Trend Breakdown
+SPY Buy & Sell Model — Full Explanation
 
-What Is This?
-This document outlines an enhanced rule-based system for detecting SPY market crashes.
- It improves upon the original by combining price action, volume pressure, and a trend filter to confirm true crashes and suppress early or false signals during minor pullbacks.
+Purpose:
+This document explains a rule-based TradingView script that generates BUY and SELL signals for SPY (S&P 500 ETF) using technical indicators and market behavior. The model includes a crash-detection BUY signal and a post-rebound SELL signal.
 
-Crash Detection Criteria
-A crash is flagged only when all of the following conditions are met:
-SPY drops 6% or more within a rolling 12-trading-day window (from recent high)
- (captures short-term sharp declines)
+✅ Buy Signal (Crash Detector)
 
+This signal is based on four classic crash indicators. It aims to detect panic-driven selloffs and identify potential market bottoms where a rebound may follow.
 
-At least one day within that 12-day window has a daily drop of 3% or more
- (indicates panic selling)
+Conditions:
 
+SPY drops at least 6% from its 12-bar high
 
-At least two additional days within a 14-day window have daily drops of 1.75% or more
- (shows sustained downward pressure)
+At least one daily drop ≥ 3% in the last 12 bars
 
+At least two daily drops ≥ 1.75% in the last 14 bars
 
-The 14-day average volume is at least 15% higher than the prior 30-day average
- (confirms institutional-level selling through elevated trading activity)
+Volume spike: 14-bar average volume ≥ 1.15× 30-bar average
 
+These conditions detect fear and panic-based selling in high-volume environments — a common sign of capitulation or crash events.
 
-SPY is currently -10% or more below its 8-week high
- (measures significant drawdown from recent peak; uses the highest close in the last 40 trading days)
-The VIX (Volatility Index) is above 37                                                                                             (adds a volatility filter to confirm extreme market fear)
+❌ Sell Signal (Euphoric Rebound Detector)
 
+This signal detects overextended rallies following major rebounds. It attempts to exit positions near euphoric tops, after the market has made a sustained and aggressive run.
 
-SPY is trading below its 21-day Simple Moving Average (SMA)
- (SMA represents the short-term trend; this ensures the market is in a confirmed downtrend)
+Strict Sell Conditions:
 
+SPY rebounded ≥ 6% from its 20-bar low
 
+At least one daily gain ≥ 3% in last 15 bars
 
+At least one daily gain ≥ 1.75% in last 10 bars
 
+SPY is ≥ 8% above its 12-week low (60 bars)
 
-Why This Version Is More Reliable
-The original model triggered too early in some cases—sometimes before the market had structurally broken down.
- This updated model resolves that by requiring:
-A deep drawdown from peak prices (a measurable fall from the recent high)
+SPY has broken its 100-week high (500-bar high)
 
+These criteria confirm strong rallies, euphoric buying, and new highs — the classic signs of short-term topping behavior.
 
-A confirmed short-term trend reversal (through the 21-day SMA)
+ Adaptive Sell Logic & Real Example
+🔁 Adaptive Sell Rule Relaxation
 
+To avoid selling too early after a crash, the SELL model has adaptive thresholds that relax under certain conditions.
 
-Volume pressure consistent with institutional panic (large increases in traded shares)
+Relaxed rules activate only if:
 
+80 bars have passed since the 52-week low
 
-Together, these ensure that red triangle alerts appear only after multiple layers of crash evidence are in place.
+A daily drop of ≥ -1.75% occurs (which toggles relaxed mode ON or OFF)
 
-Case Study: April 2025 Crash
-Date Range
-Signal Shown?
-Explanation
-April 2–3, 2025
-No
-Early drop occurred, but trend had not broken
-April 4, 2025
-Yes
-SPY dropped over 5% in a single day, triggering multiple rules
-April 7–11, 2025
-Yes
-All crash rules met including SMA and 10% drawdown
+✅ Relaxed Sell Conditions:
 
-A red triangle was shown after a 10%+ drawdown from the recent high, combined with volume pressure and trend confirmation.
- This avoided an early false signal and caught the breakdown precisely as panic accelerated.
-(Real Modeling from Tradingview Pinescript, 6 months 2 hour intervals)
-Backtest Review: Events That Met the Updated Criteria
-Crash Event
-Signal Shown?
-Notes
-March 2020 (COVID-19)
-Yes
-Signal shown after confirmed breakdown
-June 2022 CPI Drop
-Yes
-Detected mid-drop after multiple days of pressure
-August 2024 Pullback
-No
-Failed to meet 10% drop and SMA filter
-April 2025 Crash
-Yes
-Detected once drawdown and volume spike aligned
+SPY rebounded ≥ 2.7% from 20-bar low
 
+At least one daily gain ≥ 1.20% in last 15 bars
 
-Summary
-This model filters out early or misleading signals. It only triggers when multiple indicators confirm that institutional panic and technical breakdowns are underway.
-Investors using this model can confidently wait for:
-Clear technical breakdowns
+At least one daily gain ≥ 0.85% in last 10 bars
 
+SPY is ≥ 4.5% above its 12-week low
 
-Sustained drawdowns
+SPY is within 3.75% of the 100-week high (doesn’t need to break it)
 
+This mode is ideal for post-crash markets where rallies are strong but volatile, and we want to exit closer to the peak without demanding a full breakout.
 
-Confirmed volume pressure
+📅 Real Example:
 
+• June 20, 2025 – ✅ SELL Signal
+SPY broke its 100-week high after rebounding more than 6%. It had recent daily gains ≥ 3% and ≥ 1.75%, and was far above its recent low. This confirmed euphoric momentum and triggered a SELL.
 
-Only then does the system flag true, actionable crash signals. This helps eliminate fear-based trades and positions investors to take advantage of real market reversals.
+• February 6, 2025 – ❌ No SELL
+The market was rising, but SPY had not broken the 100-week high. The signal remained inactive to avoid false exits during early recovery.
 
-Implementation
-This crash detection model has been fully implemented and backtested using Pine Script on TradingView, allowing for automated signal plotting, historical verification, and visual confirmation through red triangle markers.
- The model runs on a daily chart of SPY and filters out early noise by combining multiple time-based and trend-based conditions in real-time.
-How to Apply the Crash Signal Model with SMS Alerts
-Load your crash detection Pine Script on the SPY daily chart in TradingView.
+ Visualization & Alerts
+📊 Visual Indicators on Chart
 
+This model plots triangle markers with labels when signals are triggered:
 
-Ensure the script includes this line:
- alertcondition(crashSignal, title="Crash Detected", message="🚨 CRASH: SPY breakdown confirmed.")
+🟢 Green Triangle below bar
+Label: "BUY"
+Meaning: A crash-style event has occurred; potential bottom.
+Strategy: Start watching for entry opportunities.
 
+🔴 Red Triangle above bar
+Label: "SELL"
+Meaning: Euphoric breakout confirmed; potential short-term top.
+Strategy: Consider locking profits or tightening stops.
 
-Create a free account on Zapier.com.
+🔔 Alerts
 
+The script includes alert conditions for both signals:
 
-Make a new Zap:
+"BUY Signal" → When all 4 crash rules are met
 
+"SELL Signal" → When all rebound rules (strict or relaxed) are met
 
-Trigger: Webhooks by Zapier → “Catch Hook”
+Use these alerts on daily SPY charts to get real-time notifications during crashes or rallies.
 
+⚠️ Notes
 
-Action: Twilio → “Send SMS”
+These signals are not perfect — they highlight zones of statistical interest based on historical market behavior.
 
+The BUY signal helps identify panic bottoms. The SELL signal focuses on euphoric tops.
 
-Copy the Webhook URL Zapier provides.
-
-
-In TradingView, click "Create Alert" for crashSignal.
-
-
-Set “Once per bar close”
-
-
-Paste the Webhook URL
-
-
-Add your crash message
-
-
-When the model criteria are met, you’ll receive an instant SMS alert — no trading account need
-
-
-
+This model is best used in conjunction with broader analysis and not as a stand-alone trading system.

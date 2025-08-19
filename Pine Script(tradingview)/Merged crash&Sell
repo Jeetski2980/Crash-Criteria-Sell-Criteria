@@ -1,0 +1,76 @@
+//@version=6
+indicator("SPY Buy & Sell Signals — Crash Entry + Rebound Exit Model", overlay=true)
+
+// === INPUTS ===
+useVIX        = input.bool(false, "Enable VIX Filter for Sell?")
+vixSymbol     = input.symbol("CBOE:VIX", "VIX Symbol")
+vixThreshold  = input.float(45.0, "VIX Threshold")
+
+// === COMMON SERIES ===
+priceDrop = (close - close[1]) / close[1] * 100
+isDrop3   = priceDrop <= -3 ? 1 : 0
+isDrop175 = priceDrop <= -1.75 ? 1 : 0
+
+// === BUY SIGNAL (Crash Recovery Entry) ===
+// 4 crash conditions
+maxDrop12           = 100 * (close - ta.highest(close, 12)) / ta.highest(close, 12)
+rolling6PercentDrop = maxDrop12 <= -6
+rolling3PercentDay  = math.sum(isDrop3, 12) >= 1
+rollingTwo175Days   = math.sum(isDrop175, 14) >= 2
+vol14               = ta.sma(volume, 14)
+vol30               = ta.sma(volume, 30)
+volumeSpike         = vol14 >= 1.15 * vol30
+
+buySignal = rolling6PercentDrop and rolling3PercentDay and rollingTwo175Days and volumeSpike
+
+// === SELL SIGNAL (Euphoric Rebound Exit) ===
+spyLow20     = ta.lowest(close, 20)
+spyLow12w    = ta.lowest(close, 60)
+spyLow52w    = ta.lowest(close, 252)
+spyHigh100w  = ta.highest(close, 500)
+
+rebound20   = (close - spyLow20) / spyLow20 * 100
+above12w    = (close - spyLow12w) / spyLow12w * 100
+distHigh100 = (spyHigh100w - close) / spyHigh100w * 100
+
+bigGain3    = ta.highest(priceDrop, 15) >= 3.0
+bigGain175  = ta.highest(priceDrop, 10) >= 1.75
+breakHigh   = close > spyHigh100w[1]
+
+// Relaxed condition toggle
+barsSince52Low = ta.barssince(low == spyLow52w)
+drop175        = priceDrop <= -1.75
+var bool relaxedOn = false
+if barsSince52Low > 80 and drop175
+    relaxedOn := not relaxedOn
+
+// Relaxed thresholds
+rebound20_rel   = rebound20 >= 2.7
+bigGain3_rel    = ta.highest(priceDrop, 15) >= 1.20
+bigGain175_rel  = ta.highest(priceDrop, 10) >= 0.85
+above12w_rel    = above12w >= 4.5
+withinHigh_rel  = distHigh100 <= 3.75
+
+// Strict thresholds
+rebound20_str   = rebound20 >= 6
+bigGain3_str    = bigGain3
+bigGain175_str  = bigGain175
+above12w_str    = above12w >= 8
+breakHigh_str   = breakHigh
+
+// Final sell logic
+sellStrict = rebound20_str and bigGain3_str and bigGain175_str and above12w_str and breakHigh_str
+sellRelax  = rebound20_rel and bigGain3_rel and bigGain175_rel and above12w_rel and withinHigh_rel
+sellSignal = (relaxedOn ? sellRelax : sellStrict)
+
+// Optional VIX filter
+vixClose = request.security(vixSymbol, timeframe.period, close)
+sellFinal = useVIX ? (sellSignal and vixClose < vixThreshold) : sellSignal
+
+// === PLOT SIGNALS ===
+plotshape(buySignal, title="Buy Signal", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small, text="BUY")
+plotshape(sellFinal, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small, text="SELL")
+
+// === ALERTS ===
+alertcondition(buySignal, title="BUY Signal", message="SPY BUY signal (Crash Recovery Detected)")
+alertcondition(sellFinal, title="SELL Signal", message="SPY SELL signal (Euphoric Rally Detected)")

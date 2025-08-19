@@ -1,0 +1,34 @@
+//@version=6
+indicator("SPY Crash Detector (All 4 + New 8-Week Low in Last 15 Days)", overlay=true)
+
+
+// Daily % Drop Checks
+priceDrop = (close - close[1]) / close[1] * 100
+isDrop3 = priceDrop <= -3 ? 1 : 0
+isDrop175 = priceDrop <= -1.75 ? 1 : 0
+
+
+// Original 4 Crash Conditions
+maxDrop12 = 100 * (close - ta.highest(close, 12)) / ta.highest(close, 12)
+rolling6PercentDrop = maxDrop12 <= -6
+rolling3PercentDay = math.sum(isDrop3, 12) >= 1
+rollingTwo175Days = math.sum(isDrop175, 14) >= 2
+vol14 = ta.sma(volume, 14)
+vol30 = ta.sma(volume, 30)
+volumeSpike = vol14 >= 1.15 * vol30
+
+
+// ✅ New 8-Week Breakdown (recent support break)
+past8WeekLow = ta.lowest(close[1], 40)      // lowest close from 1–40 days ago
+recentLow15 = ta.lowest(close, 15)          // lowest close in last 15 days
+isBreaking8WeekLow = recentLow15 < past8WeekLow
+
+
+// Final Condition: All 4 crash rules + recent 8-week low break
+crashSignal = rolling6PercentDrop and rolling3PercentDay and rollingTwo175Days and volumeSpike and isBreaking8WeekLow
+
+
+// Plot Signal
+bgcolor(crashSignal ? color.new(color.red, 85) : na)
+plotshape(crashSignal, title="Crash Signal", location=location.belowbar, color=color.red, style=shape.triangledown, size=size.small)
+alertcondition(crashSignal, title="Crash Detected", message="Crash signal + recent 8-week low breakdown")
